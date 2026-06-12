@@ -10,7 +10,7 @@ export class PredictionService {
 
   async getLayoffPrediction(ticker: string) {
     try {
-      const url = 'http://127.0.0.1:8000/predict'; 
+      const url = `${process.env.ML_API_URL}/predict`; 
       
       // We must use POST and send the ticker to match your FastAPI server
       const response = await lastValueFrom(
