@@ -8,37 +8,36 @@ export class PredictionService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  async getLayoffPrediction(ticker: string) {
+async getLayoffPrediction(ticker: string) {
   const url = `${process.env.ML_API_URL}/predict`;
- console.log("ML URL:", url);
-  const maxRetries = 5;
 
-  for (let i = 0; i < maxRetries; i++) {
+  const maxRetries = 10;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await lastValueFrom(
         this.httpService.post(
           url,
           { ticker },
           {
-            timeout: 15000, // 15 seconds
+            timeout: 90000,
           },
         ),
       );
 
       return response.data;
-    } catch (error:any) {
-  console.log(error);
-  console.log(error.response?.data);
-  console.log(error.code);
-  console.log(error.message);
+    } catch (error) {
+      console.log(`Attempt ${attempt} failed`);
 
-  this.logger.error(error);
+      if (attempt === maxRetries) {
+        throw new HttpException(
+          "ML Engine is starting. Please try again.",
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
 
-  throw new HttpException(
-    'ML Engine is starting. Please try again in a few seconds.',
-    HttpStatus.SERVICE_UNAVAILABLE,
-  );
-}
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
   }
 }
 }
