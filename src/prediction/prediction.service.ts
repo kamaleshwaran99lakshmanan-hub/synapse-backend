@@ -16,51 +16,51 @@ export class PredictionService {
   async getLayoffPrediction(ticker: string) {
     const url = `${process.env.ML_API_URL}/predict`;
 
-    try {
-      // First attempt
-      const response = await lastValueFrom(
-        this.httpService.post(
-          url,
-          { ticker },
-          {
-            timeout: 100000,
-          },
-        ),
-      );
+   try {
+  const response = await lastValueFrom(
+    this.httpService.post(
+      url,
+      { ticker },
+      {
+        timeout: 100000,
+      },
+    ),
+  );
 
-      return response.data;
-    } catch (error) {
-      this.logger.warn(
-        'ML service appears to be sleeping. Waiting for Render cold start...',
-      );
+  console.log("✅ First request succeeded");
+  return response.data;
+} catch (error:any) {
+  console.log("❌ First request failed");
+  console.log(error.response?.status);
+  console.log(error.message);
 
-      // Wait 70 seconds for Render free tier to wake up
-      await new Promise((resolve) => setTimeout(resolve, 70000));
+  await new Promise(resolve => setTimeout(resolve, 70000));
 
-      try {
-        // Second attempt
-        const retryResponse = await lastValueFrom(
-          this.httpService.post(
-            url,
-            { ticker },
-            {
-              timeout: 100000,
-            },
-          ),
-        );
+  console.log("⏳ Finished waiting 70 seconds");
 
-        return retryResponse.data;
-      } catch (retryError) {
-        this.logger.error(
-          'ML service failed even after waiting.',
-          retryError,
-        );
+  try {
+    const retryResponse = await lastValueFrom(
+      this.httpService.post(
+        url,
+        { ticker },
+        {
+          timeout: 100000,
+        },
+      ),
+    );
 
-        throw new HttpException(
-          'ML Engine is still starting. Please try again in a few moments.',
-          HttpStatus.SERVICE_UNAVAILABLE,
-        );
-      }
-    }
+    console.log("✅ Second request succeeded");
+    return retryResponse.data;
+  } catch (retryError:any) {
+    console.log("❌ Second request failed");
+    console.log(retryError.response?.status);
+    console.log(retryError.message);
+
+    throw new HttpException(
+      "ML Engine is still starting. Please try again.",
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+}
   }
 }
