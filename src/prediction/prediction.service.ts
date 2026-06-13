@@ -9,21 +9,36 @@ export class PredictionService {
   constructor(private readonly httpService: HttpService) {}
 
   async getLayoffPrediction(ticker: string) {
+  const url = `${process.env.ML_API_URL}/predict`;
+
+  const maxRetries = 5;
+
+  for (let i = 0; i < maxRetries; i++) {
     try {
-      const url = `${process.env.ML_API_URL}/predict`; 
-      
-      // We must use POST and send the ticker to match your FastAPI server
       const response = await lastValueFrom(
-        this.httpService.post(url, { ticker: ticker })
+        this.httpService.post(
+          url,
+          { ticker },
+          {
+            timeout: 15000, // 15 seconds
+          },
+        ),
       );
-      
-      return response.data; 
+
+      return response.data;
     } catch (error) {
-      this.logger.error('Failed to connect to ML Model API', error);
-      throw new HttpException(
-        'Failed to connect to Synapse ML Engine', 
-        HttpStatus.SERVICE_UNAVAILABLE
-      );
+      this.logger.warn(`Attempt ${i + 1} failed`);
+
+      if (i === maxRetries - 1) {
+        throw new HttpException(
+          'ML Engine is starting. Please try again in a few seconds.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+
+      // wait 5 seconds before retrying
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
+}
 }
