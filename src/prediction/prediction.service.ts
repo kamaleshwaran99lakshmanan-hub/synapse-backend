@@ -10,7 +10,7 @@ export class PredictionService {
 
   async getLayoffPrediction(ticker: string) {
   const url = `${process.env.ML_API_URL}/predict`;
-
+ console.log("ML URL:", url);
   const maxRetries = 5;
 
   for (let i = 0; i < maxRetries; i++) {
