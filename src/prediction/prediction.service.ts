@@ -26,19 +26,19 @@ export class PredictionService {
       );
 
       return response.data;
-    } catch (error) {
-      this.logger.warn(`Attempt ${i + 1} failed`);
+    } catch (error:any) {
+  console.log(error);
+  console.log(error.response?.data);
+  console.log(error.code);
+  console.log(error.message);
 
-      if (i === maxRetries - 1) {
-        throw new HttpException(
-          'ML Engine is starting. Please try again in a few seconds.',
-          HttpStatus.SERVICE_UNAVAILABLE,
-        );
-      }
+  this.logger.error(error);
 
-      // wait 5 seconds before retrying
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
+  throw new HttpException(
+    'ML Engine is starting. Please try again in a few seconds.',
+    HttpStatus.SERVICE_UNAVAILABLE,
+  );
+}
   }
 }
 }
